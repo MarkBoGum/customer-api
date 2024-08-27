@@ -14,15 +14,29 @@ class CreateCustomersTable extends Migration
     public function up()
     {
         Schema::create('customers', function (Blueprint $table) {
-            $table->id();
-            $table->string('first_name', 100);
-            $table->string('last_name', 100);
+            $table->bigIncrements('id'); // Primary key
+            $table->string('first_name');
+            $table->string('last_name');
             $table->string('email')->unique();
-            $table->string('username', 100);
-            $table->string('gender', 10);
-            $table->string('country', 100);
-            $table->string('city', 100);
-            $table->string('phone', 20);
+            $table->string('username');
+            $table->string('gender');
+            $table->date('dob');
+            $table->string('phone');
+            $table->string('cell')->nullable();
+            $table->string('country');
+            $table->string('city');
+            $table->string('state')->nullable();
+            $table->string('street_name')->nullable();
+            $table->integer('street_number')->nullable();
+            $table->string('postcode')->nullable();
+            $table->string('latitude', 20)->nullable();
+            $table->string('longitude', 20)->nullable();
+            $table->string('timezone_offset')->nullable();
+            $table->string('timezone_description')->nullable();
+            $table->string('password', 32); // MD5 hash for password
+            $table->string('picture_large')->nullable();
+            $table->string('picture_medium')->nullable();
+            $table->string('picture_thumbnail')->nullable();
             $table->timestamps();
         });
     }
