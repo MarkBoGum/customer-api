@@ -3,9 +3,10 @@
 namespace App\Entities;
 
 use Doctrine\ORM\Mapping as ORM;
+use App\Repositories\CustomerRepository;
 
 /**
- * @ORM\Entity
+ * @ORM\Entity(repositoryClass=CustomerRepository::class)
  * @ORM\Table(name="customers")
  */
 class Customer
