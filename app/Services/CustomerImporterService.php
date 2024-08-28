@@ -56,7 +56,6 @@ class CustomerImporterService
         }
     }
 
-
     protected function mapCustomerData(Customer $customer, array $customerData)
     {
         $customer->setFirstName($customerData['name']['first']);
@@ -64,23 +63,10 @@ class CustomerImporterService
         $customer->setEmail($customerData['email']);
         $customer->setUsername($customerData['login']['username']);
         $customer->setGender($customerData['gender']);
-        $customer->setDob(new \DateTime($customerData['dob']['date']));
-        $customer->setPhone($customerData['phone']);
-        $customer->setCell($customerData['cell'] ?? null);
         $customer->setCountry($customerData['location']['country']);
         $customer->setCity($customerData['location']['city']);
-        $customer->setState($customerData['location']['state'] ?? null);
-        $customer->setStreetName($customerData['location']['street']['name'] ?? null);
-        $customer->setStreetNumber($customerData['location']['street']['number'] ?? null);
-        $customer->setPostcode($customerData['location']['postcode'] ?? null);
-        $customer->setLatitude($customerData['location']['coordinates']['latitude'] ?? null);
-        $customer->setLongitude($customerData['location']['coordinates']['longitude'] ?? null);
-        $customer->setTimezoneOffset($customerData['location']['timezone']['offset'] ?? null);
-        $customer->setTimezoneDescription($customerData['location']['timezone']['description'] ?? null);
-        $customer->setPassword($customerData['login']['md5']);
-        $customer->setPictureLarge($customerData['picture']['large'] ?? null);
-        $customer->setPictureMedium($customerData['picture']['medium'] ?? null);
-        $customer->setPictureThumbnail($customerData['picture']['thumbnail'] ?? null);
+        $customer->setPhone($customerData['phone']);
+        $customer->setPassword(md5($customerData['login']['password']));
         $customer->setCreatedAt(new \DateTime());
         $customer->setUpdatedAt(new \DateTime());
     }

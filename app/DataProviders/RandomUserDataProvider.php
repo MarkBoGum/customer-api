@@ -18,3 +18,4 @@ class RandomUserDataProvider implements CustomerDataProviderInterface
         return $response->json()['results'];
     }
 }
+
