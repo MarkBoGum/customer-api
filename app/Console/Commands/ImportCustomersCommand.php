@@ -7,7 +7,7 @@ use App\Services\CustomerImporterService;
 
 class ImportCustomersCommand extends Command
 {
-    protected $signature = 'customers:import {count=100}';
+    protected $signature = 'import:customers {count=100}';
     protected $description = 'Import customers from the Random User API';
 
     protected $importerService;

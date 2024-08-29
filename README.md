@@ -55,7 +55,7 @@ The application should now be running at `http://localhost:8000`.
 You can import customer data by running the provided Artisan command:
 
 ```
-php artisan customers:import <number-of-customers>
+php artisan import:customers <number-of-customers>
 ```
 
 - Replace `<number-of-customers>` with the number of customers you want to import.
