@@ -14,20 +14,20 @@ This project is an API-based application built using Laravel 10 and Doctrine ORM
 
 ### 1. Clone the Repository
 ```
-git clone <repository-url>
-cd <repository-directory>
+git clone https://github.com/MarkBoGum/customer-api.git
+cd customer-api
 ```
 
-### 2. Install Dependencies
-```
-composer install
-```
-
-### 3. Environment Configuration
+### 2. Environment Configuration
 ```
 cp .env.example .env
 ```
 - Update the `.env` file with your database credentials and other necessary configurations.
+
+### 3. Install Dependencies
+```
+composer install
+```
 
 ### 4. Doctrine Setup
 
@@ -78,7 +78,7 @@ php artisan customers:import <number-of-customers>
 
 **Example Request:**
 ```
-GET /api/customers?page=1&pageSize=10
+GET /api/customers?page=1&pageSize=2
 ```
 
 **Example Response:**
@@ -91,7 +91,11 @@ GET /api/customers?page=1&pageSize=10
             "email": "john.doe@example.com",
             "country": "Australia"
         },
-        ...
+        {
+            "full_name": "Allen Harper",
+            "email": "allen.harper@example.com",
+            "country": "Australia"
+        },
     ]
 }
 ```
