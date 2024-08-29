@@ -1,66 +1,160 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Customer API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Overview
 
-## About Laravel
+This project is an API-based application built using Laravel 10 and Doctrine ORM, leveraging the [Laravel Doctrine ORM package](https://github.com/laravel-doctrine/orm). It imports customer data from an external API, [Random User API](https://randomuser.me/), and provides RESTful endpoints to list and retrieve detailed customer information. 
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Prerequisites
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- PHP 8.1.0 or greater
+- Composer
+- MySQL 5.7+ or compatible database
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Setup Instructions
 
-## Learning Laravel
+### 1. Clone the Repository
+```
+git clone <repository-url>
+cd <repository-directory>
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 2. Install Dependencies
+```
+composer install
+```
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### 3. Environment Configuration
+```
+cp .env.example .env
+```
+- Update the `.env` file with your database credentials and other necessary configurations.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 4. Doctrine Setup
 
-## Laravel Sponsors
+Run the following commands to create the database schema:
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```
+php artisan doctrine:schema:create
+```
 
-### Premium Partners
+### 5. Running the Application
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+Start the Laravel development server:
 
-## Contributing
+```
+php artisan serve
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+The application should now be running at `http://localhost:8000`.
 
-## Code of Conduct
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Data Import Process
 
-## Security Vulnerabilities
+### Using the Command-Line Tool
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+You can import customer data by running the provided Artisan command:
 
-## License
+```
+php artisan customers:import <number-of-customers>
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- Replace `<number-of-customers>` with the number of customers you want to import.
+- The default value is 100, so if you don't specify a number, the command will import 100 customers by default.
+- This command will fetch data from the external API and store it in the database.
+
+## API Endpoints Documentation
+
+### 1. List Customers
+**URL:** `/api/customers`  
+**Method:** `GET`
+
+**Query Parameters:**
+- `page`  (optional, default = 1) 
+
+    *The page number to retrieve.*
+- `pageSize` (optional, default = 10, max=100)
+
+    *Number of records per page.*
+
+**Example Request:**
+```
+GET /api/customers?page=1&pageSize=10
+```
+
+**Example Response:**
+```json
+{
+    "status": "success",
+    "data": [
+        {
+            "full_name": "John Doe",
+            "email": "john.doe@example.com",
+            "country": "Australia"
+        },
+        ...
+    ]
+}
+```
+
+### 2. Retrieve Customer Details
+**URL:** `/api/customers/{id}`  
+**Method:** `GET`
+
+**Path Parameters:**
+- `id` : *The ID of the customer to retrieve.*
+
+**Example Request:**
+```
+GET /api/customers/1
+```
+
+**Example Response:**
+```json
+{
+    "status": "success",
+    "data": {
+        "full_name": "John Doe",
+        "email": "john.doe@example.com",
+        "username": "johndoe",
+        "gender": "male",
+        "country": "Australia",
+        "city": "Sydney",
+        "phone": "1234567890"
+    }
+}
+```
+
+### 3. Error Responses
+
+Example:
+```json
+{
+    "message": "Customer not found"
+}
+```
+
+## Running Tests
+
+### 1. Setup a Test Database
+
+Before running tests, ensure you have a separate database created specifically for testing purposes. This prevents test data from interfering with your development or production databases.
+
+### 2. Configurations for the Test Database
+
+Make sure your `phpunit.xml` file is properly configured to use the test database. For example:
+
+```xml
+<php>
+    <env name="DB_CONNECTION" value="mysql"/>
+    <env name="DB_DATABASE" value="your_test_database"/>
+    <env name="DB_USERNAME" value="your_test_username"/>
+    <env name="DB_PASSWORD" value="your_test_password"/>
+</php>
+```
+
+### 3. Run Tests
+Run the following commands to execute all unit and feature tests:
+
+```
+php artisan test
+```
