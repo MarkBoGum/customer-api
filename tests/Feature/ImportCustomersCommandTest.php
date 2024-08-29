@@ -15,7 +15,6 @@ class ImportCustomersCommandTest extends TestCase
         parent::setUp();
 
         $this->importerServiceMock = Mockery::mock(CustomerImporterService::class);
-
         $this->app->instance(CustomerImporterService::class, $this->importerServiceMock);
     }
 

@@ -3,6 +3,9 @@
 namespace Tests\Feature;
 
 use Tests\TestCase;
+use App\Repositories\CustomerRepository;
+use Illuminate\Support\Facades\Log;
+use Mockery;
 
 class CustomerControllerTest extends TestCase
 {
@@ -51,6 +54,23 @@ class CustomerControllerTest extends TestCase
                  ]);
     }
 
+    public function testGetCustomersHandlesException()
+    {
+        // Mock the CustomerRepository to throw an exception
+        $mock = Mockery::mock(CustomerRepository::class);
+        $mock->shouldReceive('findAllCustomers')->andThrow(new \Exception('Database error'));
+
+        $this->app->instance(CustomerRepository::class, $mock);
+
+        Log::shouldReceive('error')->once()->with('Failed to retrieve customers: Database error');
+
+        $response = $this->get('/api/customers');
+        $response->assertStatus(500)
+                 ->assertJson([
+                     'message' => 'Unable to retrieve customers',
+                 ]);
+    }
+
     public function testGetCustomerDetails()
     {
         // Test existing customer
@@ -81,6 +101,23 @@ class CustomerControllerTest extends TestCase
         $response->assertStatus(404)
                  ->assertJson([
                      'message' => 'Customer not found',
+                 ]);
+    }
+
+    public function testGetCustomerDetailsHandlesException()
+    {
+        // Mock the CustomerRepository to throw an exception
+        $mock = Mockery::mock(CustomerRepository::class);
+        $mock->shouldReceive('findCustomerById')->andThrow(new \Exception('Database error'));
+
+        $this->app->instance(CustomerRepository::class, $mock);
+
+        Log::shouldReceive('error')->once()->with('Failed to retrieve customer: Database error');
+
+        $response = $this->get('/api/customers/1');
+        $response->assertStatus(500)
+                 ->assertJson([
+                     'message' => 'Unable to retrieve customer',
                  ]);
     }
 }

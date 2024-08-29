@@ -8,6 +8,7 @@ use App\Contracts\CustomerDataProviderInterface;
 use App\Repositories\CustomerRepository;
 use App\Services\CustomerImporterService;
 use App\Entities\Customer;
+use Illuminate\Support\Facades\Log;
 
 class CustomerImporterServiceTest extends TestCase
 {
@@ -209,5 +210,20 @@ class CustomerImporterServiceTest extends TestCase
 
         $this->customerRepositoryMock->shouldHaveReceived('save')->times($batchSize);
         $this->customerRepositoryMock->shouldHaveReceived('flush')->once();
+    }
+
+    public function testImportCustomersHandlesException()
+    {
+        $this->dataProviderMock
+            ->shouldReceive('fetchCustomers')
+            ->andThrow(new \Exception('API error'));
+
+        Log::shouldReceive('error')
+            ->once()
+            ->with('Failed to import customers: API error');
+
+        $this->expectException(\Exception::class);
+
+        $this->importerService->importCustomers(1);
     }
 }
