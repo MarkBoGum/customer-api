@@ -4,6 +4,8 @@ namespace App\Repositories;
 
 use Doctrine\ORM\EntityRepository;
 use App\Entities\Customer;
+use Doctrine\ORM\Exception\ORMException;
+use Illuminate\Support\Facades\Log;
 
 class CustomerRepository extends EntityRepository
 {
@@ -14,21 +16,24 @@ class CustomerRepository extends EntityRepository
 
     public function save(Customer $customer): void
     {
-        $this->_em->persist($customer);
+        try {
+            $this->_em->persist($customer);
+        } catch (ORMException $e) {
+            Log::error("Failed to save customer: " . $e->getMessage());
+            throw $e;
+        }
     }
 
     public function flush(): void
     {
-        $this->_em->flush();
+        try {
+            $this->_em->flush();
+        } catch (ORMException $e) {
+            Log::error("Failed to flush customer changes: " . $e->getMessage());
+            throw $e;
+        }
     }
 
-    /**
-     * Find all customers with pagination.
-     *
-     * @param int $page The page number (1-based index).
-     * @param int $pageSize The number of records per page.
-     * @return array An array of customer data.
-     */
     public function findAllCustomers(int $page, int $pageSize): array
     {
         $offset = ($page - 1) * $pageSize;
@@ -44,12 +49,6 @@ class CustomerRepository extends EntityRepository
         return $query->getArrayResult();
     }
 
-    /**
-     * Find a single customer by ID with detailed information.
-     *
-     * @param int $customerId The ID of the customer.
-     * @return array|null An array of customer details or null if not found.
-     */
     public function findCustomerById(int $customerId): ?array
     {
         $query = $this->_em->createQuery(
