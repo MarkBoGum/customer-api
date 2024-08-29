@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Contracts\CustomerDataProviderInterface;
 use App\Repositories\CustomerRepository;
 use App\Entities\Customer;
+use Illuminate\Support\Facades\Log;
 
 class CustomerImporterService
 {
@@ -20,39 +21,42 @@ class CustomerImporterService
 
     public function importCustomers(int $count): void
     {
-        $pageSize = 50; // Default number of records to fetch per page
-        $totalPages = ceil($count / $pageSize);
-        $remainingCustomers = $count;
+        try {
+            $pageSize = 50;
+            $totalPages = ceil($count / $pageSize);
+            $remainingCustomers = $count;
 
-        for ($page = 1; $page <= $totalPages; $page++) {
-            // Adjust pageSize for the last page or when count is less than pageSize
-            $currentPageSize = min($remainingCustomers, $pageSize);
-            $customers = $this->dataProvider->fetchCustomers($page, $currentPageSize);
-            $batchCount = 0;
+            for ($page = 1; $page <= $totalPages; $page++) {
+                // Adjust pageSize for the last page or when count is less than pageSize
+                $currentPageSize = min($remainingCustomers, $pageSize);
+                $customers = $this->dataProvider->fetchCustomers($page, $currentPageSize);
+                $batchCount = 0;
 
-            foreach ($customers as $customerData) {
-                $customer = $this->customerRepository->findByEmail($customerData['email']);
+                foreach ($customers as $customerData) {
+                    $customer = $this->customerRepository->findByEmail($customerData['email']);
 
-                if (!$customer) {
-                    $customer = new Customer();
+                    if (!$customer) {
+                        $customer = new Customer();
+                    }
+
+                    $this->mapCustomerData($customer, $customerData);
+                    $this->customerRepository->save($customer);
+
+                    if (++$batchCount === $this->batchSize) {
+                        $this->customerRepository->flush();
+                        $batchCount = 0;
+                    }
                 }
 
-                $this->mapCustomerData($customer, $customerData);
-                $this->customerRepository->save($customer);
-
-                if (++$batchCount === $this->batchSize) {
+                if ($batchCount > 0) {
                     $this->customerRepository->flush();
-                    $batchCount = 0;
                 }
-            }
 
-            // Flush remaining entities if any
-            if ($batchCount > 0) {
-                $this->customerRepository->flush();
+                $remainingCustomers -= $currentPageSize;
             }
-
-            // Decrement the remaining customers to fetch
-            $remainingCustomers -= $currentPageSize;
+        } catch (\Exception $e) {
+            Log::error("Failed to import customers: " . $e->getMessage());
+            throw $e;
         }
     }
 
