@@ -5,10 +5,17 @@ namespace App\Repositories;
 use Doctrine\ORM\EntityRepository;
 use App\Entities\Customer;
 use Doctrine\ORM\Exception\ORMException;
-use Illuminate\Support\Facades\Log;
+use Psr\Log\LoggerInterface;
 
 class CustomerRepository extends EntityRepository
 {
+    protected $logger;
+
+    public function setLogger(LoggerInterface $logger): void
+    {
+        $this->logger = $logger;
+    }
+
     public function findByEmail(string $email): ?Customer
     {
         return $this->findOneBy(['email' => $email]);
@@ -19,7 +26,9 @@ class CustomerRepository extends EntityRepository
         try {
             $this->_em->persist($customer);
         } catch (ORMException $e) {
-            Log::error("Failed to save customer: " . $e->getMessage());
+            if ($this->logger) {
+                $this->logger->error("Failed to save customer: " . $e->getMessage());
+            }
             throw $e;
         }
     }
@@ -29,7 +38,9 @@ class CustomerRepository extends EntityRepository
         try {
             $this->_em->flush();
         } catch (ORMException $e) {
-            Log::error("Failed to flush customer changes: " . $e->getMessage());
+            if ($this->logger) {
+                $this->logger->error("Failed to flush customer changes: " . $e->getMessage());
+            }
             throw $e;
         }
     }

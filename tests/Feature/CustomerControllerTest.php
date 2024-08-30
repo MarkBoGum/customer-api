@@ -4,11 +4,21 @@ namespace Tests\Feature;
 
 use Tests\TestCase;
 use App\Repositories\CustomerRepository;
-use Illuminate\Support\Facades\Log;
 use Mockery;
+use Psr\Log\LoggerInterface;
 
 class CustomerControllerTest extends TestCase
 {
+    protected $loggerMock;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->loggerMock = Mockery::mock(LoggerInterface::class);
+        $this->app->instance(LoggerInterface::class, $this->loggerMock);
+    }
+
     public function testGetCustomers()
     {
         // Test retrieving the first 5 customers
@@ -62,7 +72,7 @@ class CustomerControllerTest extends TestCase
 
         $this->app->instance(CustomerRepository::class, $mock);
 
-        Log::shouldReceive('error')->once()->with('Failed to retrieve customers: Database error');
+        $this->loggerMock->shouldReceive('error')->once()->with('Failed to retrieve customers: Database error');
 
         $response = $this->get('/api/customers');
         $response->assertStatus(500)
@@ -112,7 +122,7 @@ class CustomerControllerTest extends TestCase
 
         $this->app->instance(CustomerRepository::class, $mock);
 
-        Log::shouldReceive('error')->once()->with('Failed to retrieve customer: Database error');
+        $this->loggerMock->shouldReceive('error')->once()->with('Failed to retrieve customer: Database error');
 
         $response = $this->get('/api/customers/1');
         $response->assertStatus(500)

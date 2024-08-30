@@ -4,12 +4,25 @@ namespace Tests\Unit;
 
 use Tests\TestCase;
 use App\DataProviders\RandomUserDataProvider;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Client\Factory as HttpClient;
+use Illuminate\Http\Client\RequestException;
 use Mockery;
+use Psr\Log\LoggerInterface;
+use Psr\Http\Message\MessageInterface;
+use Psr\Http\Message\StreamInterface;
 
 class RandomUserDataProviderTest extends TestCase
 {
+    protected $httpClientMock;
+    protected $loggerMock;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->httpClientMock = Mockery::mock(HttpClient::class);
+        $this->loggerMock = Mockery::mock(LoggerInterface::class);
+    }
+
     protected function tearDown(): void
     {
         Mockery::close();
@@ -18,13 +31,29 @@ class RandomUserDataProviderTest extends TestCase
 
     public function testFetchCustomersSuccess()
     {
-        // Mock the Http facade to return a successful response with 50 customers
-        Http::fake([
-            config('services.random_user_api.url') . '?' . http_build_query([
+        $apiUrl = config('services.random_user_api.url');
+        $nationality = config('services.random_user_api.nationality');
+
+        // Mock the HttpClient to return a successful response with 50 customers
+        $this->httpClientMock
+            ->shouldReceive('get')
+            ->once()
+            ->with($apiUrl, [
                 'results' => 50,
                 'page' => 1,
-                'nat' => config('services.random_user_api.nationality'),
-            ]) => Http::response([
+                'nat' => $nationality,
+            ])
+            ->andReturnSelf();
+
+        $this->httpClientMock
+            ->shouldReceive('throw')
+            ->once()
+            ->andReturnSelf();
+
+        $this->httpClientMock
+            ->shouldReceive('json')
+            ->once()
+            ->andReturn([
                 'results' => array_fill(0, 50, [
                     'name' => ['first' => 'John', 'last' => 'Doe'],
                     'email' => 'john.doe@example.com',
@@ -33,10 +62,9 @@ class RandomUserDataProviderTest extends TestCase
                     'location' => ['country' => 'Australia', 'city' => 'Sydney'],
                     'phone' => '1234567890',
                 ]),
-            ], 200)
-        ]);
+            ]);
 
-        $dataProvider = new RandomUserDataProvider();
+        $dataProvider = new RandomUserDataProvider($this->httpClientMock, $this->loggerMock);
         $customers = $dataProvider->fetchCustomers(1, 50);
 
         $this->assertIsArray($customers);
@@ -46,20 +74,45 @@ class RandomUserDataProviderTest extends TestCase
 
     public function testFetchCustomersHandlesRequestException()
     {
-        // Mock the Http facade to throw a RequestException
-        Http::fake([
-            config('services.random_user_api.url') . '?' . http_build_query([
+        $apiUrl = config('services.random_user_api.url');
+        $nationality = config('services.random_user_api.nationality');
+
+        // Mock the Response and PsrResponse objects
+        $responseMock = Mockery::mock('Illuminate\Http\Client\Response');
+        $psrResponseMock = Mockery::mock(MessageInterface::class);
+        $streamMock = Mockery::mock(StreamInterface::class);
+
+        $responseMock->shouldReceive('status')->andReturn(500);
+        $responseMock->shouldReceive('toPsrResponse')->andReturn($psrResponseMock);
+
+        // Mock the PsrResponse to return a stream mock
+        $psrResponseMock->shouldReceive('getBody')->andReturn($streamMock);
+
+        // Mock the Stream to return a readable and seekable state
+        $streamMock->shouldReceive('isSeekable')->andReturn(true);
+        $streamMock->shouldReceive('isReadable')->andReturn(true);
+        $streamMock->shouldReceive('getSize')->andReturn(0); // Simulate an empty body
+
+        // Mock the HttpClient to throw a RequestException
+        $this->httpClientMock
+            ->shouldReceive('get')
+            ->once()
+            ->with($apiUrl, [
                 'results' => 50,
                 'page' => 1,
-                'nat' => config('services.random_user_api.nationality'),
-            ]) => Http::response([], 500)
-        ]);
+                'nat' => $nationality,
+            ])
+            ->andThrow(new RequestException($responseMock));
 
-        Log::shouldReceive('error')->once()->with(Mockery::on(function ($message) {
-            return strpos($message, 'Failed to fetch customers') !== false;
-        }));
+        // Expect the logger to receive an error message
+        $this->loggerMock
+            ->shouldReceive('error')
+            ->once()
+            ->with(Mockery::on(function ($message) {
+                return strpos($message, 'Failed to fetch customers') !== false;
+            }));
 
-        $dataProvider = new RandomUserDataProvider();
+        $dataProvider = new RandomUserDataProvider($this->httpClientMock, $this->loggerMock);
         $customers = $dataProvider->fetchCustomers(1, 50);
 
         $this->assertIsArray($customers);

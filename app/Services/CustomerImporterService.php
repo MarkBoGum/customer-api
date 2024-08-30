@@ -5,18 +5,27 @@ namespace App\Services;
 use App\Contracts\CustomerDataProviderInterface;
 use App\Repositories\CustomerRepository;
 use App\Entities\Customer;
-use Illuminate\Support\Facades\Log;
+use App\Transformers\RandomUserTransformer;
+use Psr\Log\LoggerInterface;
 
 class CustomerImporterService
 {
     protected $dataProvider;
     protected $customerRepository;
+    protected $randomUserTransformer;
+    protected $logger;
     protected $batchSize = 20; // Number of records to persist before flushing
 
-    public function __construct(CustomerDataProviderInterface $dataProvider, CustomerRepository $customerRepository)
-    {
+    public function __construct(
+        CustomerDataProviderInterface $dataProvider,
+        CustomerRepository $customerRepository,
+        RandomUserTransformer $randomUserTransformer,
+        LoggerInterface $logger
+    ) {
         $this->dataProvider = $dataProvider;
         $this->customerRepository = $customerRepository;
+        $this->randomUserTransformer = $randomUserTransformer;
+        $this->logger = $logger;
     }
 
     public function importCustomers(int $count): void
@@ -33,13 +42,14 @@ class CustomerImporterService
                 $batchCount = 0;
 
                 foreach ($customers as $customerData) {
-                    $customer = $this->customerRepository->findByEmail($customerData['email']);
+                    $transformedData = $this->randomUserTransformer->transform($customerData);
+                    $customer = $this->customerRepository->findByEmail($transformedData['email']);
 
                     if (!$customer) {
                         $customer = new Customer();
                     }
 
-                    $this->mapCustomerData($customer, $customerData);
+                    $this->mapCustomerData($customer, $transformedData);
                     $this->customerRepository->save($customer);
 
                     if (++$batchCount === $this->batchSize) {
@@ -55,23 +65,23 @@ class CustomerImporterService
                 $remainingCustomers -= $currentPageSize;
             }
         } catch (\Exception $e) {
-            Log::error("Failed to import customers: " . $e->getMessage());
+            $this->logger->error("Failed to import customers: " . $e->getMessage());
             throw $e;
         }
     }
 
     protected function mapCustomerData(Customer $customer, array $customerData)
     {
-        $customer->setFirstName($customerData['name']['first']);
-        $customer->setLastName($customerData['name']['last']);
+        $customer->setFirstName($customerData['first_name']);
+        $customer->setLastName($customerData['last_name']);
         $customer->setEmail($customerData['email']);
-        $customer->setUsername($customerData['login']['username']);
+        $customer->setUsername($customerData['username']);
         $customer->setGender($customerData['gender']);
-        $customer->setCountry($customerData['location']['country']);
-        $customer->setCity($customerData['location']['city']);
+        $customer->setCountry($customerData['country']);
+        $customer->setCity($customerData['city']);
         $customer->setPhone($customerData['phone']);
-        $customer->setPassword(md5($customerData['login']['password']));
-        $customer->setCreatedAt(new \DateTime());
-        $customer->setUpdatedAt(new \DateTime());
+        $customer->setPassword($customerData['password']);
+        $customer->setCreatedAt($customerData['created_at']);
+        $customer->setUpdatedAt($customerData['updated_at']);
     }
 }
