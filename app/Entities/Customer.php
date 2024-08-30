@@ -73,11 +73,6 @@ class Customer
      */
     private $updatedAt;
 
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
-
     public function getFirstName(): ?string
     {
         return $this->firstName;
@@ -177,20 +172,10 @@ class Customer
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
-    {
-        return $this->createdAt;
-    }
-
     public function setCreatedAt(\DateTimeInterface $createdAt): self
     {
         $this->createdAt = $createdAt;
         return $this;
-    }
-
-    public function getUpdatedAt(): ?\DateTimeInterface
-    {
-        return $this->updatedAt;
     }
 
     public function setUpdatedAt(\DateTimeInterface $updatedAt): self
