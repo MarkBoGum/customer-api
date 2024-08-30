@@ -4,18 +4,26 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Repositories\CustomerRepository;
+use App\Transformers\RandomUserTransformer;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
+use Psr\Log\LoggerInterface;
 
 class CustomerController extends Controller
 {
     protected $customerRepository;
+    protected $customerTransformer;
+    protected $logger;
     protected $defaultPageSize;
     protected $maxPageSize;
 
-    public function __construct(CustomerRepository $customerRepository)
-    {
+    public function __construct(
+        CustomerRepository $customerRepository,
+        RandomUserTransformer $randomUserTransformer,
+        LoggerInterface $logger
+    ) {
         $this->customerRepository = $customerRepository;
+        $this->customerTransformer = $randomUserTransformer;
+        $this->logger = $logger;
         $this->defaultPageSize = config('pagination.default_size', 10);
         $this->maxPageSize = config('pagination.max_size', 100);
     }
@@ -38,12 +46,12 @@ class CustomerController extends Controller
                 'data' => $customers,
             ]);
         } catch (\Exception $e) {
-            Log::error("Failed to retrieve customers: " . $e->getMessage());
+            $this->logger->error("Failed to retrieve customers: " . $e->getMessage());
             return response()->json(['message' => 'Unable to retrieve customers'], 500);
         }
     }
 
-    public function show($customerId)
+    public function show($customerId): JsonResponse
     {
         try {
             if (!ctype_digit($customerId)) {
@@ -61,7 +69,7 @@ class CustomerController extends Controller
                 'data' => $customer,
             ], 200);
         } catch (\Exception $e) {
-            Log::error("Failed to retrieve customer: " . $e->getMessage());
+            $this->logger->error("Failed to retrieve customer: " . $e->getMessage());
             return response()->json(['message' => 'Unable to retrieve customer'], 500);
         }
     }
